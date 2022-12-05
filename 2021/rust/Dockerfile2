@@ -1,0 +1,11 @@
+from rust:1.61 AS builder
+
+WORKDIR /usr/src/myapp
+
+COPY . .
+
+RUN cargo install --path app 
+
+FROM debian:buster-slim
+COPY --from=builder /usr/local/cargo/bin/app /usr/local/bin/myapp
+CMD ["myapp"]
