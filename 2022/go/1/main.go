@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	filename := "input2.txt"
+	filename := "input.txt"
 	readFile, err := os.Open(filename)
 
 	if err != nil {
