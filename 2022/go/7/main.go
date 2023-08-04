@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -18,21 +17,17 @@ type Node struct {
 }
 
 func ReadCommand(command string, node *Node) *Node {
-	fmt.Printf("node=\t%p\tparent=%p\n", node, node.Parent)
 	args := strings.Split(command, " ")
 	if args[0] == "$" {
 		if args[1] == "cd" {
 			if args[2] == ".." {
-				log.Printf("moving to parent %s \n", node.Parent.Name)
 				return node.Parent
 			} else {
-				log.Printf("moving to child %s \n", node.Children[args[2]].Name)
 				return node.Children[args[2]]
 			}
 		}
 	} else {
 		if args[0] == "dir" {
-			log.Printf("creating dir child %s \n", args[1])
 			node.Children[args[1]] = &Node{
 				Parent:   node,
 				Children: map[string]*Node{},
@@ -42,7 +37,7 @@ func ReadCommand(command string, node *Node) *Node {
 			}
 		} else {
 			value, _ := strconv.Atoi(args[0])
-			log.Printf("creating file child %s \n", args[1])
+			//fmt.Printf("creating file child %s value %d\n", args[1], value)
 			child := &Node{
 				Parent:   node,
 				Children: map[string]*Node{},
@@ -51,12 +46,23 @@ func ReadCommand(command string, node *Node) *Node {
 				Type:     "file",
 			}
 			node.Children[args[1]] = child
-			node.Size += value
+			addValue(node, value)
 		}
 
 	}
 
 	return node
+}
+
+func addValue(node *Node, value int) {
+	parent := node.Parent
+	for parent != nil {
+		//fmt.Printf("node %s = %d + %d\n", parent.Name, parent.Size, value)
+		parent.Size += value
+		parent = parent.Parent
+	}
+	//fmt.Printf("node %s = %d + %d\n", node.Name, node.Size, value)
+	node.Size += value
 }
 func readFile(filename string) Node {
 	root := Node{
@@ -66,7 +72,7 @@ func readFile(filename string) Node {
 		Name:     "/",
 		Type:     "dir",
 	}
-	fmt.Printf("Address of node=\t%p\n", &root)
+	//fmt.Printf("Address of node=\t%p\n", &root)
 	readFile, err := os.Open(filename)
 	if err != nil {
 		panic("no file")
@@ -74,7 +80,7 @@ func readFile(filename string) Node {
 	fileScanner := bufio.NewScanner(readFile)
 	line := 0
 	node := &root
-	fmt.Printf("Address of node=\t%p\n", node)
+	//fmt.Printf("Address of node=\t%p\n", node)
 	for fileScanner.Scan() {
 		if line != 0 {
 			node = ReadCommand(fileScanner.Text(), node)
@@ -82,11 +88,28 @@ func readFile(filename string) Node {
 		line++
 
 	}
-	return *node
+	return root
+}
+
+func printNode(node *Node, output *int) {
+	fmt.Printf("node %s : ", node.Name)
+	if node.Size < 100000 {
+		fmt.Printf("value %d added to output %d, output now is : %d", node.Size, *output, *output+node.Size)
+		*output = *output + node.Size
+	}
+	for _, child := range node.Children {
+		if child.Type == "dir" {
+			printNode(child, output)
+		}
+	}
+	fmt.Println(" - ")
 }
 
 func main() {
-	puzzle := readFile("example.txt")
-	log.Printf("%s - %d", puzzle.Name, puzzle.Size)
+	puzzle := readFile("input.txt")
+	fmt.Println("finish reading")
+	result := 0
+	printNode(&puzzle, &result)
+	fmt.Println(result)
 
 }
