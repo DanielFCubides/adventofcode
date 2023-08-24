@@ -92,9 +92,9 @@ func readFile(filename string) Node {
 }
 
 func printNode(node *Node, output *int) {
-	fmt.Printf("node %s : ", node.Name)
+	//fmt.Printf("node %s : ", node.Name)
 	if node.Size < 100000 {
-		fmt.Printf("value %d added to output %d, output now is : %d", node.Size, *output, *output+node.Size)
+		//fmt.Printf("value %d added to output %d, output now is : %d", node.Size, *output, *output+node.Size)
 		*output = *output + node.Size
 	}
 	for _, child := range node.Children {
@@ -102,7 +102,33 @@ func printNode(node *Node, output *int) {
 			printNode(child, output)
 		}
 	}
-	fmt.Println(" - ")
+	//fmt.Println(" - ")
+}
+
+func nodeToMap(node *Node, nodeMap map[string]int) map[string]int {
+	nodeMap[node.Name] = node.Size
+	for _, child := range node.Children {
+		if child.Type == "dir" {
+			nodeToMap(child, nodeMap)
+		}
+	}
+	return nodeMap
+}
+
+func FreeSpace(nodeMap map[string]int) int {
+	freeSpace := 70000000 - nodeMap["/"]
+	spaceToFree := 30000000 - freeSpace
+	candidate := nodeMap["/"]
+
+	for key, value := range nodeMap {
+		if value > spaceToFree {
+			fmt.Printf("%s : %d   - %d > %d and %d >= %d\n ", key, value, value, spaceToFree, candidate, value)
+			if candidate >= value {
+				candidate = value
+			}
+		}
+	}
+	return candidate
 }
 
 func main() {
@@ -111,5 +137,8 @@ func main() {
 	result := 0
 	printNode(&puzzle, &result)
 	fmt.Println(result)
+	nodeMap := nodeToMap(&puzzle, map[string]int{})
+	fmt.Println(nodeMap)
+	fmt.Println(FreeSpace(nodeMap))
 
 }
