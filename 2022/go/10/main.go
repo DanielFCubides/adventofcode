@@ -20,24 +20,32 @@ func startClockCircuit(instructions []string) {
 	executionInProgress := 0
 	valueToAdd := 0
 	result := 0
+	spritePosition := []int{1, 2, 3}
+	CurrentCRTRow := "# "
 	for i := 1; i <= lastCycle; i++ {
-		if (i-20)%40 == 0 {
+		//fmt.Printf("Start cycle %d: \n", i)
+		if (i)%40 == 0 {
 			result += i * RegisterX
-			fmt.Printf("cycle %d - X value is %d - %d - result value is %d\n", i, RegisterX, i*RegisterX, result)
+			fmt.Println(CurrentCRTRow)
+			CurrentCRTRow = ""
 		}
+		cycle := i % 40
 		if executionInProgress > 0 {
 			executionInProgress--
 			if valueToAdd != 0 && executionInProgress == 0 {
 				RegisterX += valueToAdd
-				//fmt.Printf("setting x to %d\n", RegisterX)
+				spritePosition = []int{RegisterX - 1, RegisterX, RegisterX + 1}
+				//fmt.Printf("Sprite position [%d,%d,%d]\n", spritePosition[0], spritePosition[1], spritePosition[2])
 				valueToAdd = 0
 			}
+			printCurrentCRTRwo(&CurrentCRTRow, spritePosition, cycle)
 			continue
 		}
 		instruction := strings.Split(instructions[0], " ")
 		instructions = instructions[1:]
 		if len(instruction) == 1 {
 			//fmt.Printf("end of cycle %d\n", i)
+			printCurrentCRTRwo(&CurrentCRTRow, spritePosition, cycle)
 			continue
 		}
 		if len(instruction) == 2 {
@@ -45,8 +53,25 @@ func startClockCircuit(instructions []string) {
 			valueToAdd, _ = strconv.Atoi(instruction[1])
 			//fmt.Printf("end of cycle %d\n", i)
 		}
-
+		printCurrentCRTRwo(&CurrentCRTRow, spritePosition, cycle)
 	}
+}
+func printCurrentCRTRwo(CurrentCRTRow *string, spritePosition []int, col int) {
+	if contains(spritePosition, col) {
+		*CurrentCRTRow += "# "
+	} else {
+		*CurrentCRTRow += ". "
+	}
+	//fmt.Println(*CurrentCRTRow)
+}
+
+func contains(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
 
 func printStringList(input []string) {
