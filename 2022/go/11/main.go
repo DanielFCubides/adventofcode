@@ -2,106 +2,81 @@ package main
 
 import "fmt"
 
-type Monkey struct {
-	startingItems []int
-	operation     func(int) int
-	test          func(int) int
+func InspectItemPart1(m *Monkey, monkeys []*Monkey, divisibleFactor int) {
+	item := m.startingItems[0]
+	m.startingItems = m.startingItems[1:]
+	//newWorryLevel := m.operation(item % m.moduleFactor)
+	newWorryLevel := m.operation(item)
+	newWorryLevel = (int)(newWorryLevel / 3)
+	throwTo := m.test(newWorryLevel)
+	monkeys[throwTo].startingItems = append(monkeys[throwTo].startingItems, newWorryLevel)
+	m.inspect++
 }
 
-func (m Monkey) String() string {
-	items := m.startingItems
-	return fmt.Sprintf("\tmonkey starting items: %#v\n", items)
+func InspectItemPart2(m *Monkey, monkeys []*Monkey, divisibleFactor int) {
+	item := m.startingItems[0]
+	m.startingItems = m.startingItems[1:]
+	newWorryLevel := m.operation(item % divisibleFactor)
+	throwTo := m.test(newWorryLevel)
+	monkeys[throwTo].startingItems = append(monkeys[throwTo].startingItems, newWorryLevel)
+	m.inspect++
 }
-
-func InspectItems(monkeyid int, monkeys []*Monkey) {
+func InspectItems(monkeyid int, monkeys []*Monkey, InspectItem func(m *Monkey, monkeys []*Monkey, divisibleFactor int)) {
 	m := monkeys[monkeyid]
 	numberOfItems := len(m.startingItems)
-	fmt.Printf("monkey %d has %d items\n", monkeyid, numberOfItems)
+	divisibleFactor := calculateDivisibleProduct(monkeys)
 	if numberOfItems > 0 {
 		for i := 0; i < numberOfItems; i++ {
-			InspectItem(m, monkeys)
+			InspectItem(
+				m,
+				monkeys,
+				divisibleFactor,
+			)
 		}
 	}
 
 }
 
-func InspectItem(m *Monkey, monkeys []*Monkey) {
-	item := m.startingItems[0]
-	fmt.Printf("\tMonkey inspects an item with a worry level of %d\n", item)
-	m.startingItems = m.startingItems[1:]
-	newWorryLevel := m.operation(item)
-	newWorryLevel = (int)(newWorryLevel / 3)
-	fmt.Printf("\tMonkey gets bored with item. Worry level is divided by 3 to %d\n", newWorryLevel)
-	throwTo := m.test(newWorryLevel)
-	fmt.Printf("\tItem with worry level %d is thrown to monkey %d\n\n", newWorryLevel, throwTo)
-	monkeys[throwTo].startingItems = append(monkeys[throwTo].startingItems, newWorryLevel)
+func calculateDivisibleProduct(monkeys []*Monkey) int {
+	divisibleProduct := 1
+	for _, monkey := range monkeys {
+		divisibleProduct = divisibleProduct * monkey.moduleFactor
+	}
+	return divisibleProduct
+}
+
+func MonkeyBusiness(monkeys []*Monkey) int {
+	MostActiveMonkey, secondMostActiveMonkey := monkeys[0].inspect, monkeys[1].inspect
+	for i := 2; i < len(monkeys); i++ {
+		monkeyActivity := monkeys[i].inspect
+		if monkeyActivity > MostActiveMonkey && monkeyActivity > secondMostActiveMonkey {
+			secondMostActiveMonkey = MostActiveMonkey
+			MostActiveMonkey = monkeyActivity
+			continue
+		}
+		if monkeyActivity < MostActiveMonkey && monkeyActivity > secondMostActiveMonkey {
+			secondMostActiveMonkey = monkeyActivity
+
+		}
+	}
+	return MostActiveMonkey * secondMostActiveMonkey
+}
+
+func MonkeyInTheMiddle(monkeys []*Monkey, rounds int, InspectItem func(m *Monkey, monkeys []*Monkey, divisibleFactor int)) ([]*Monkey, int) {
+	for i := 0; i < rounds; i++ {
+		//fmt.Println("Round ", i+1)
+		for monkeyid, _ := range monkeys {
+			InspectItems(monkeyid, monkeys, InspectItem)
+		}
+	}
+	fmt.Println(monkeys)
+	monkeyBusiness := MonkeyBusiness(monkeys)
+	return monkeys, monkeyBusiness
 }
 
 func main() {
-	monkeys := createMonkeysExample()
-	fmt.Println(monkeys)
-	MonkeyInTheMiddle(monkeys)
+	monkeys := createMonkeysInput()
+	_, monkeyBusiness := MonkeyInTheMiddle(monkeys, 10000, InspectItemPart2)
+	fmt.Println(monkeyBusiness)
 
-}
-
-func MonkeyInTheMiddle(monkeys []*Monkey) []*Monkey {
-	for i := 0; i < 1; i++ {
-		for monkeyid, _ := range monkeys {
-			fmt.Printf("Monkey %d:\n", monkeyid)
-			InspectItems(monkeyid, monkeys)
-		}
-		fmt.Println(monkeys)
-	}
-	return monkeys
-}
-
-func createMonkeysExample() []*Monkey {
-	return []*Monkey{{
-		startingItems: []int{79, 98},
-		operation: func(i int) int {
-			return i * 19
-		},
-		test: func(i int) int {
-			if i%23 == 0 {
-				return 2
-			}
-			return 3
-		},
-	},
-		{
-			startingItems: []int{54, 65, 75, 74},
-			operation: func(i int) int {
-				return i + 6
-			},
-			test: func(i int) int {
-				if i%19 == 0 {
-					return 2
-				}
-				return 0
-			},
-		},
-		{
-			startingItems: []int{79, 60, 97},
-			operation: func(i int) int {
-				return i * i
-			},
-			test: func(i int) int {
-				if i%13 == 0 {
-					return 1
-				}
-				return 3
-			},
-		},
-		{
-			startingItems: []int{74},
-			operation: func(i int) int {
-				return i + 3
-			},
-			test: func(i int) int {
-				if i%17 == 0 {
-					return 0
-				}
-				return 1
-			},
-		}}
 }
