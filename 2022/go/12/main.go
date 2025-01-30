@@ -78,13 +78,18 @@ func HillClimbing(puzzle [][]string, currentPosition Position) int {
 
 			// Get current and next elevation
 			currentElevation := getElevation(puzzle[current.position.y][current.position.x])
+
 			nextElevation := getElevation(puzzle[nextPosition.y][nextPosition.x])
 
 			// Check if can move
 			if nextElevation <= currentElevation+1 {
+				stepsFromTheStart := current.stepsFromTheStart
+				if currentElevation != int('a') {
+					stepsFromTheStart = current.stepsFromTheStart + 1
+				}
 				queue = append(queue, PositionVisited{
 					position:          nextPosition,
-					stepsFromTheStart: current.stepsFromTheStart + 1,
+					stepsFromTheStart: stepsFromTheStart,
 					altitude:          puzzle[nextPosition.y][nextPosition.x],
 				})
 				visited[key] = true
